@@ -20,16 +20,16 @@ def get_date_modified(file_path: str) -> float:
     return os.path.getmtime(file_path)
 
 
-def get_sorted_apps(apps_directory: str, arrange_by: str) -> List[str]:
+def get_sorted_apps(apps_directory: str, sort_by: str) -> List[str]:
     """Sort apps based on the selected criteria"""
     apps = os.listdir(apps_directory)
-    if arrange_by == "Name":
+    if sort_by == "Name":
         sorted_apps = sorted(apps)
-    elif arrange_by == "Size":
+    elif sort_by == "Size":
         sorted_apps = sorted(apps, key=lambda app: get_file_size(os.path.join(apps_directory, app)))
-    elif arrange_by == "Date created":
+    elif sort_by == "Date created":
         sorted_apps = sorted(apps, key=lambda app: get_date_created(os.path.join(apps_directory, app)))
-    elif arrange_by == "Date modified":
+    elif sort_by == "Date modified":
         sorted_apps = sorted(apps, key=lambda app: get_date_modified(os.path.join(apps_directory, app)))
     return sorted_apps
 
@@ -46,24 +46,53 @@ def display_apps(sorted_apps: List[str], apps_directory: str, num_columns: int) 
         column_idx = idx % num_columns
         container = cols[column_idx].container(border=True)
         with container:
-            st.header(f":blue[{os.path.splitext(app_name)[0]}]")
+            # st.header(f":blue[{os.path.splitext(app_name)[0]}]")
+            st.markdown(
+                f"""
+                <div style='position: relative;'>
+                    <div style='position: absolute; top: 0; left: 0; font-size: 1.2em; font-weight: bold;'>{idx + 1}</div>
+                    <div style='padding-top: 20px;'>
+                        <h3 style='color: #1f77b4;'>{os.path.splitext(app_name)[0]}</h3>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
             if st.button("Launch app", key=idx):
                 launch_app(os.path.join(apps_directory, app_name))
+
+
+def upload_apps(apps_directory: str) -> None:
+    """Upload new Streamlit apps"""
+    uploaded_files = st.file_uploader("Select your Streamlit apps", type="py", accept_multiple_files=True)
+    if uploaded_files:
+        if st.button("Upload Apps"):
+            for uploaded_file in uploaded_files:
+                file_name = uploaded_file.name
+                with open(os.path.join(apps_directory, file_name), "wb") as f:
+                    f.write(uploaded_file.getvalue())
+            st.success("Upload successful!")
 
 
 # Streamlit UI
 def main() -> None:
     st.title("Streamlit App Launcher")
+
     with st.sidebar:
-        arrange_by = st.selectbox("Arrange apps by:",
-                                  ("Name", "Size", "Date created", "Date modified",))
+        st.header("Upload New Apps")
+        st.divider()
+        apps_directory = "streamlit_apps"  # put your streamlit apps (.py) in this folder
+        upload_apps(apps_directory)
 
+    st.divider()
     st.write("")
     st.write("")
-    st.write(f"Apps sorted by {arrange_by.lower()}")
 
-    apps_directory = "example_apps"  # put your streamlit apps (.py) in this folder
-    sorted_apps = get_sorted_apps(apps_directory, arrange_by)
+    with st.popover("Sort apps by"):
+        sort_by = st.radio("Options", ("Name", "Size", "Date created", "Date modified"))
+
+    apps_directory = "streamlit_apps"  # put your streamlit apps (.py) in this folder
+    sorted_apps = get_sorted_apps(apps_directory, sort_by)
 
     num_columns = 2
     display_apps(sorted_apps, apps_directory, num_columns)
