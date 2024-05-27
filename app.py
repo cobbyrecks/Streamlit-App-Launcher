@@ -2,6 +2,7 @@ import os
 import subprocess
 import streamlit as st
 
+from PIL import Image
 from typing import List
 
 
@@ -39,7 +40,13 @@ def launch_app(app_file: str) -> None:
     subprocess.Popen(["streamlit", "run", app_file])
 
 
-def display_apps(sorted_apps: List[str], apps_directory: str, num_columns: int) -> None:
+def get_icon_path(icon_directory: str, app_name: str) -> str:
+    """Get the path to the icon file"""
+    icon_name = os.path.splitext(app_name)[0] + ".png"  # Assuming app_icons are in PNG format with same name as the app
+    return os.path.join(icon_directory, icon_name)
+
+
+def display_apps(sorted_apps: List[str], apps_directory: str, num_columns: int, icon_directory: str) -> None:
     """Display the sorted apps"""
     cols = st.columns(num_columns)
     for idx, app_name in enumerate(sorted_apps):
@@ -51,13 +58,15 @@ def display_apps(sorted_apps: List[str], apps_directory: str, num_columns: int) 
                 f"""
                 <div style='position: relative;'>
                     <div style='position: absolute; top: 0; left: 0; font-size: 1.2em; font-weight: bold;'>{idx + 1}</div>
-                    <div style='padding-top: 20px;'>
-                        <h3 style='color: #1f77b4;'>{os.path.splitext(app_name)[0]}</h3>
-                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+            icon_path = get_icon_path(icon_directory, app_name)
+            if os.path.exists(icon_path):
+                icon = Image.open(icon_path)
+                container.image(icon, width=60)
+            st.subheader(f":blue[{os.path.splitext(app_name)[0]}]")
             if st.button("Launch app", key=idx):
                 launch_app(os.path.join(apps_directory, app_name))
 
@@ -92,10 +101,11 @@ def main() -> None:
         sort_by = st.radio("Options", ("Name", "Size", "Date created", "Date modified"))
 
     apps_directory = "streamlit_apps"  # put your streamlit apps (.py) in this folder
+    icon_directory = "app_icons"  # put your app app_icons in this folder
     sorted_apps = get_sorted_apps(apps_directory, sort_by)
 
     num_columns = 2
-    display_apps(sorted_apps, apps_directory, num_columns)
+    display_apps(sorted_apps, apps_directory, num_columns, icon_directory)
 
 
 if __name__ == "__main__":
