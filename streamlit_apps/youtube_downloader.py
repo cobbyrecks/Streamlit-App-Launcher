@@ -130,9 +130,6 @@ def main() -> None:
                         video_streams_data.append((yt, video_streams))
                     else:
                         st.error(f"No available streams found for video {idx + 1}!")
-                # except (RegexMatchError, VideoUnavailable, Exception) as e:
-                #     st.error(f"Error loading video {idx + 1}: {e}")
-
                 except RegexMatchError:
                     st.error(f"Invalid YouTube URL: Video {idx + 1}. Please enter a valid URL!")
                 except VideoUnavailable:
